@@ -10,6 +10,12 @@ servers:
 tags:
   - name: health
     description: Health operations
+  - name: auth
+  - name: workspace
+  - name: reports
+  - name: matches
+  - name: conversations
+  - name: recovery
 paths:
   /healthz:
     get:
@@ -24,7 +30,311 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+  /auth/register:
+    post:
+      operationId: register
+      tags: [auth]
+      summary: Create a TraceBack account
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RegisterInput"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthResponse"
+        "400":
+          description: Invalid input
+  /auth/login:
+    post:
+      operationId: login
+      tags: [auth]
+      summary: Log in to TraceBack
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LoginInput"
+      responses:
+        "200":
+          description: Logged in
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthResponse"
+        "401":
+          description: Invalid credentials
+  /auth/logout:
+    post:
+      operationId: logout
+      tags: [auth]
+      summary: Log out of TraceBack
+      responses:
+        "204":
+          description: Logged out
+  /auth/me:
+    get:
+      operationId: getCurrentUser
+      tags: [auth]
+      summary: Get the current session user
+      responses:
+        "200":
+          description: Current user
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+        "401":
+          description: Not authenticated
+  /workspace/summary:
+    get:
+      operationId: getWorkspaceSummary
+      tags: [workspace]
+      summary: Get user-scoped dashboard counts
+      responses:
+        "200":
+          description: Dashboard summary
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WorkspaceSummary"
+  /workspace/activity:
+    get:
+      operationId: getActivity
+      tags: [workspace]
+      summary: Get recent user-scoped activity
+      responses:
+        "200":
+          description: Activity
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Activity"
+  /reports:
+    get:
+      operationId: listReports
+      tags: [reports]
+      summary: Search public reports
+      parameters:
+        - $ref: "#/components/parameters/Search"
+        - $ref: "#/components/parameters/ReportType"
+        - $ref: "#/components/parameters/Category"
+      responses:
+        "200":
+          description: Reports visible to the signed-in user
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Report"
+    post:
+      operationId: createReport
+      tags: [reports]
+      summary: Create a lost or found report
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ReportInput"
+      responses:
+        "201":
+          description: Created report
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Report"
+  /reports/{id}:
+    get:
+      operationId: getReport
+      tags: [reports]
+      summary: Get an authorized report
+      parameters:
+        - $ref: "#/components/parameters/ReportId"
+      responses:
+        "200":
+          description: Report
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Report"
+    patch:
+      operationId: updateReport
+      tags: [reports]
+      summary: Update an owned report
+      parameters:
+        - $ref: "#/components/parameters/ReportId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ReportUpdate"
+      responses:
+        "200":
+          description: Updated report
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Report"
+    delete:
+      operationId: deleteReport
+      tags: [reports]
+      summary: Delete an owned report
+      parameters:
+        - $ref: "#/components/parameters/ReportId"
+      responses:
+        "204":
+          description: Deleted
+  /matches:
+    get:
+      operationId: listMatches
+      tags: [matches]
+      summary: List authorized potential matches
+      responses:
+        "200":
+          description: Matches
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Match"
+  /matches/{id}/respond:
+    post:
+      operationId: respondToMatch
+      tags: [matches]
+      summary: Respond to a potential match
+      parameters:
+        - $ref: "#/components/parameters/MatchId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/MatchResponseInput"
+      responses:
+        "200":
+          description: Updated match
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Match"
+  /notifications:
+    get:
+      operationId: listNotifications
+      tags: [workspace]
+      summary: List user notifications
+      responses:
+        "200":
+          description: Notifications
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Notification"
+  /conversations:
+    get:
+      operationId: listConversations
+      tags: [conversations]
+      summary: List authorized conversations
+      responses:
+        "200":
+          description: Conversations
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Conversation"
+  /conversations/{id}/messages:
+    get:
+      operationId: listMessages
+      tags: [conversations]
+      summary: List messages in an authorized conversation
+      parameters:
+        - $ref: "#/components/parameters/ConversationId"
+      responses:
+        "200":
+          description: Messages
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Message"
+    post:
+      operationId: sendMessage
+      tags: [conversations]
+      summary: Send a secure message
+      parameters:
+        - $ref: "#/components/parameters/ConversationId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/MessageInput"
+      responses:
+        "201":
+          description: Sent message
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Message"
+  /recovery:
+    get:
+      operationId: listRecoveryCases
+      tags: [recovery]
+      summary: List user recovery cases
+      responses:
+        "200":
+          description: Recovery cases
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/RecoveryCase"
 components:
+  parameters:
+    Search:
+      name: search
+      in: query
+      schema: { type: string }
+    ReportType:
+      name: type
+      in: query
+      schema: { type: string, enum: [lost, found] }
+    Category:
+      name: category
+      in: query
+      schema: { type: string }
+    ReportId:
+      name: id
+      in: path
+      required: true
+      schema: { type: string }
+    MatchId:
+      name: id
+      in: path
+      required: true
+      schema: { type: string }
+    ConversationId:
+      name: id
+      in: path
+      required: true
+      schema: { type: string }
   schemas:
     HealthStatus:
       type: object
@@ -33,4 +343,144 @@ components:
           type: string
       required:
         - status
+    User:
+      type: object
+      required: [id, name, email, role, createdAt]
+      properties:
+        id: { type: string }
+        name: { type: string }
+        email: { type: string }
+        role: { type: string, enum: [user, organization, admin] }
+        avatar: { type: ["string", "null"] }
+        createdAt: { type: string }
+    RegisterInput:
+      type: object
+      required: [name, email, password]
+      properties:
+        name: { type: string, minLength: 2 }
+        email: { type: string, format: email }
+        password: { type: string, minLength: 8 }
+    LoginInput:
+      type: object
+      required: [email, password]
+      properties:
+        email: { type: string, format: email }
+        password: { type: string }
+    AuthResponse:
+      type: object
+      required: [user]
+      properties:
+        user: { $ref: "#/components/schemas/User" }
+    WorkspaceSummary:
+      type: object
+      required: [lost, found, matches, activeCases, recovered, unreadNotifications]
+      properties:
+        lost: { type: integer }
+        found: { type: integer }
+        matches: { type: integer }
+        activeCases: { type: integer }
+        recovered: { type: integer }
+        unreadNotifications: { type: integer }
+    Report:
+      type: object
+      required: [id, type, title, category, description, area, reportedAt, status, ownerId]
+      properties:
+        id: { type: string }
+        type: { type: string, enum: [lost, found] }
+        title: { type: string }
+        category: { type: string }
+        description: { type: string }
+        brand: { type: ["string", "null"] }
+        color: { type: ["string", "null"] }
+        area: { type: string }
+        date: { type: ["string", "null"] }
+        reportedAt: { type: string }
+        status: { type: string, enum: [active, matched, recovered, archived] }
+        ownerId: { type: string }
+        ownerName: { type: string }
+        isMine: { type: boolean }
+    ReportInput:
+      type: object
+      required: [type, title, category, description, area]
+      properties:
+        type: { type: string, enum: [lost, found] }
+        title: { type: string, minLength: 2 }
+        category: { type: string }
+        description: { type: string }
+        brand: { type: string }
+        color: { type: string }
+        area: { type: string }
+        date: { type: string }
+        time: { type: string }
+        privateDetails: { type: string }
+    ReportUpdate:
+      type: object
+      properties:
+        title: { type: string }
+        description: { type: string }
+        status: { type: string }
+    Match:
+      type: object
+      required: [id, score, sharedAttributes, status, report]
+      properties:
+        id: { type: string }
+        score: { type: integer }
+        sharedAttributes:
+          type: array
+          items: { type: string }
+        status: { type: string, enum: [pending, interested, declined, verified] }
+        report: { $ref: "#/components/schemas/Report" }
+    MatchResponseInput:
+      type: object
+      required: [response]
+      properties:
+        response: { type: string, enum: [interested, declined, unsure] }
+    Notification:
+      type: object
+      required: [id, title, body, type, read, createdAt]
+      properties:
+        id: { type: string }
+        title: { type: string }
+        body: { type: string }
+        type: { type: string }
+        read: { type: boolean }
+        createdAt: { type: string }
+    Activity:
+      type: object
+      required: [id, title, description, createdAt]
+      properties:
+        id: { type: string }
+        title: { type: string }
+        description: { type: string }
+        createdAt: { type: string }
+    Conversation:
+      type: object
+      required: [id, subject, participantName, lastMessage, updatedAt]
+      properties:
+        id: { type: string }
+        subject: { type: string }
+        participantName: { type: string }
+        lastMessage: { type: string }
+        updatedAt: { type: string }
+    Message:
+      type: object
+      required: [id, body, senderId, createdAt]
+      properties:
+        id: { type: string }
+        body: { type: string }
+        senderId: { type: string }
+        createdAt: { type: string }
+    MessageInput:
+      type: object
+      required: [body]
+      properties:
+        body: { type: string, minLength: 1 }
+    RecoveryCase:
+      type: object
+      required: [id, title, status, updatedAt]
+      properties:
+        id: { type: string }
+        title: { type: string }
+        status: { type: string, enum: [potential, verification, scheduled, recovered, disputed, closed] }
+        updatedAt: { type: string }
 

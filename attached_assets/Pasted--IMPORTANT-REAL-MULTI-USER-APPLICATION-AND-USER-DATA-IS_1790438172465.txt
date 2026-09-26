@@ -1,0 +1,496 @@
+# IMPORTANT — REAL MULTI-USER APPLICATION AND USER DATA ISOLATION
+
+TraceBack MUST be built as a genuine multi-user SaaS platform, NOT as a static application centered around one example user.
+
+The application must support multiple independent users registering and using the platform simultaneously.
+
+Every registered user must have their own account, profile, reports, matches, recovery cases, messages, notifications, and other personal data.
+
+## 1. REAL USER REGISTRATION AND LOGIN
+
+When a new person opens TraceBack, they should be able to:
+
+* Sign Up
+* Log In
+* Log Out
+* Reset their password
+* Verify their email
+* Manage their profile
+
+Registration should require appropriate fields such as:
+
+* Full name
+* Email
+* Password
+* Confirm password
+
+After successful registration:
+
+1. Create a new User document in MongoDB.
+2. Hash the password securely.
+3. Authenticate the user.
+4. Create their personal workspace/profile.
+5. Redirect them to their own dashboard.
+6. Start their account with no personal reports or fake activity.
+7. Show helpful empty states encouraging them to create their first report.
+
+Example new-user dashboard:
+
+"Welcome to TraceBack!"
+
+"Nothing here yet. Start by reporting a lost or found item."
+
+Buttons:
+
+* Report Lost Item
+* Report Found Item
+* Browse Reports
+
+Do NOT automatically create lost reports, found reports, matches, messages, recovery cases, or notifications for a newly registered real user.
+
+---
+
+# 2. NO HARDCODED PERSONAL DATA
+
+Do NOT build the application around one fictional or example person's information.
+
+Do NOT hardcode personal information such as:
+
+* User names
+* Emails
+* Phone numbers
+* Addresses
+* Lost items
+* Found items
+* Reports
+* Messages
+* Recovery cases
+* Claims
+* Notifications
+* Personal locations
+* Personal images
+
+Any examples in this specification are examples of how the UI should work.
+
+They must NOT become permanent application data.
+
+For example:
+
+Acceptable placeholder:
+
+"e.g. Black leather wallet"
+
+Acceptable placeholder:
+
+"e.g. Near Connaught Place"
+
+NOT acceptable:
+
+Automatically creating a real database record containing:
+
+Item: Black leather wallet
+Location: Connaught Place
+User: John Doe
+
+for every newly registered user.
+
+All real data must be created by the user through the application or through explicitly isolated DEMO MODE seed data.
+
+---
+
+# 3. EVERY USER'S DATA MUST BE SEPARATE
+
+Every user-owned resource must be associated with the authenticated user's ID.
+
+For example:
+
+User A:
+
+→ Profile A
+→ Lost Reports A
+→ Found Reports A
+→ Matches A
+→ Recovery Cases A
+→ Messages A
+→ Notifications A
+→ Handover Records A
+
+User B:
+
+→ Profile B
+→ Lost Reports B
+→ Found Reports B
+→ Matches B
+→ Recovery Cases B
+→ Messages B
+→ Notifications B
+→ Handover Records B
+
+User A must NEVER be able to access, modify, or delete User B's private data.
+
+Apply this rule throughout the entire backend.
+
+Every query involving user-owned data must be scoped using the authenticated user's identity.
+
+For example:
+
+GET /api/lost-reports
+
+must return only the reports that the authenticated user is authorized to see.
+
+Do NOT retrieve every user's private report and send it to the frontend.
+
+---
+
+# 4. PUBLIC VS PRIVATE DATA
+
+TraceBack intentionally has some information that may be publicly searchable and some information that must remain private.
+
+Implement clear access control.
+
+### Public information
+
+May include:
+
+* General item description
+* General category
+* General area
+* Approximate date
+* Public item image when explicitly allowed
+* Report status
+
+### Private information
+
+Must only be accessible to authorized users:
+
+* Private identifying characteristics
+* Verification answers
+* Exact location
+* Personal contact information
+* Sensitive documents
+* Private images
+* Serial numbers
+* Purchase information
+* Private messages
+* Recovery case details
+* Handover details when appropriate
+
+The fact that a report is searchable does NOT mean every field in its database document should be publicly accessible.
+
+Create appropriate backend authorization and response filtering.
+
+---
+
+# 5. USER-CREATED REPORTS
+
+After registration, the user should see empty sections.
+
+### My Lost Items
+
+Initially:
+
+"No lost items reported yet."
+
+Button:
+
+"+ Report Lost Item"
+
+The user creates their own report.
+
+### My Found Items
+
+Initially:
+
+"No found items reported yet."
+
+Button:
+
+"+ Report Found Item"
+
+The user creates their own report.
+
+### Potential Matches
+
+Initially:
+
+"No potential matches yet."
+
+Matches should appear only when the matching engine actually finds compatible reports involving the user's authorized reports.
+
+### Recovery Cases
+
+Initially:
+
+"No active recovery cases."
+
+Cases should appear only when an actual potential match progresses into a recovery workflow.
+
+---
+
+# 6. DYNAMIC DASHBOARDS
+
+All dashboard statistics must be calculated dynamically from the database.
+
+Do NOT hardcode values such as:
+
+* 150 items reported
+* 72 potential matches
+* 34 successful recoveries
+* 25 organizations
+
+unless those values are explicitly identified as DEMO MODE statistics.
+
+For a newly registered user, their dashboard might show:
+
+Lost Items: 0
+Found Items: 0
+Potential Matches: 0
+Active Recovery Cases: 0
+Recovered Items: 0
+Unread Notifications: 0
+
+As the user interacts with the application, these values must update automatically.
+
+---
+
+# 7. DEMO MODE VS REAL USER MODE
+
+This distinction is CRITICAL.
+
+The application may contain realistic seed data for demonstration purposes, but demo data must be completely separated from real user accounts.
+
+The existing specification asks for:
+
+* 5 demo users
+* 2 demo organizations
+* 15 demo lost reports
+* 15 demo found reports
+* Potential matches
+* Recovery cases
+* Messages
+* Notifications
+* Handover records
+* Admin moderation records
+
+These records are acceptable ONLY as DEMO MODE / DEVELOPMENT SEED DATA.
+
+They must NOT be automatically copied into newly registered users' accounts.
+
+Create a dedicated database seed script, for example:
+
+seedDemoData.js
+
+The seed data should be clearly identifiable as demo/test data.
+
+For example:
+
+* Demo users can have clearly identifiable demo accounts.
+* Demo organizations should be separate from real organizations.
+* Demo reports should belong to demo users.
+* Demo recovery cases should use demo reports.
+* Demo notifications should belong only to demo users.
+
+When a normal person clicks "Sign Up", their account must start independently and must NOT inherit any of the demo data.
+
+---
+
+# 8. DEMO MODE MUST NOT BREAK REAL MULTI-USER FUNCTIONALITY
+
+The application must support both:
+
+### DEMO MODE
+
+Used to demonstrate the complete TraceBack workflow.
+
+Example:
+
+Demo User A
+→ Lost Report
+
+Demo User B
+→ Found Report
+
+Matching Engine
+→ Potential Match
+
+Verification
+→ Recovery Case
+
+Messaging
+→ Handover
+
+Recovery
+→ Completed
+
+### REAL USER MODE
+
+A new person signs up:
+
+New User
+→ Empty dashboard
+→ Creates their own lost/found report
+→ Matching engine searches relevant reports
+→ Receives authorized potential matches
+→ Completes verification
+→ Uses secure messaging
+→ Schedules handover
+→ Marks item recovered
+
+These two modes must not contaminate each other's data.
+
+---
+
+# 9. AUTHENTICATION MUST CONTROL ACCESS
+
+JWT authentication must identify the currently logged-in user.
+
+Never trust a userId sent from the frontend for authorization.
+
+For example, do NOT rely on:
+
+{
+"userId": "some-id"
+}
+
+to determine who owns a report.
+
+Instead, obtain the authenticated user's identity from the verified JWT/session.
+
+Then enforce authorization on the backend.
+
+A user must only be able to:
+
+* Edit their own reports
+* Delete their own reports
+* View their private report information
+* View their private verification information
+* Access their own notifications
+* Access their own messages where authorized
+* Access their own recovery cases where authorized
+
+Admin and organization permissions must be handled separately using role-based authorization.
+
+---
+
+# 10. MATCHING ENGINE MUST RESPECT USER PRIVACY
+
+The Smart Matching Engine may compare reports from different users because that is the core purpose of TraceBack.
+
+However, matching two reports does NOT mean exposing all information from one user to the other.
+
+For example:
+
+User A reports a lost wallet.
+
+User B reports a found wallet.
+
+The matching engine may determine:
+
+"Potential Match — Compatibility Score: 87%"
+
+But User A should NOT automatically receive:
+
+* User B's phone number
+* User B's email
+* Private verification characteristics
+* Exact storage location
+* Private images
+* Other sensitive information
+
+Only the appropriate public/general information should be displayed.
+
+Private information should be revealed only through the secure verification workflow when authorized.
+
+---
+
+# 11. ORGANIZATION DATA MUST ALSO BE ISOLATED
+
+Organizations must have their own accounts and profiles.
+
+A real organization should be able to create and manage its own:
+
+* Organization profile
+* Found-item reports
+* Items in possession
+* Recovery cases
+* Handover information
+* Authorized staff activity
+
+One organization must not be able to modify another organization's data.
+
+Organization permissions must be enforced on the backend.
+
+---
+
+# 12. ADMIN DATA MUST BE SEPARATE
+
+Admin accounts have elevated permissions.
+
+Admins may manage the platform according to the existing specification, but normal users must never gain admin capabilities by modifying frontend data.
+
+Role authorization must be enforced server-side.
+
+Do not rely only on hiding admin UI elements.
+
+---
+
+# 13. EMPTY STATES INSTEAD OF FAKE DATA
+
+For real newly registered accounts, use meaningful empty states.
+
+Examples:
+
+"No lost items yet."
+"Report a lost item to start looking for a match."
+
+"No found items yet."
+"Help someone recover their belongings."
+
+"No potential matches yet."
+"We'll notify you when we find a compatible report."
+
+"No recovery cases yet."
+
+"No messages yet."
+
+"No notifications yet."
+
+These empty states should be attractive and provide appropriate actions.
+
+---
+
+# 14. FINAL MULTI-USER REQUIREMENT
+
+Build TraceBack as though thousands of independent users could register and use it simultaneously.
+
+The application must NOT behave like:
+
+One predefined user
+→ One predefined dashboard
+→ One predefined collection of reports
+
+It must behave like:
+
+User A
+→ Their account
+→ Their reports
+→ Their matches
+→ Their recovery cases
+
+User B
+→ Their account
+→ Their reports
+→ Their matches
+→ Their recovery cases
+
+User C
+→ Their account
+→ Their reports
+→ Their matches
+→ Their recovery cases
+
+while the matching engine can securely connect relevant reports across users without exposing unauthorized private information.
+
+The database, API, authentication, authorization, frontend state, dashboards, notifications, and analytics must all respect this multi-user architecture.
+
+The final product must be a genuine multi-user SaaS application, not a static demo with authentication added visually.
