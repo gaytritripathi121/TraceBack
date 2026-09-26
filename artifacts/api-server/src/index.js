@@ -1,4 +1,4 @@
-```js
+
 import express from "express";
 import cors from "cors";
 import path from "node:path";
@@ -1051,4 +1051,3 @@ process.on("SIGTERM", async () => {
   await pool.end();
   process.exit(0);
 });
-```
