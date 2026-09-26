@@ -1,3 +1,4 @@
+```js
 import express from "express";
 import cors from "cors";
 import path from "node:path";
@@ -1015,7 +1016,12 @@ app.post(
  */
 app.use(express.static(frontendPath));
 
-app.get("*", (req, res, next) => {
+/*
+ * Express 5 does NOT accept app.get("*").
+ *
+ * /{*splat} is the Express 5-compatible catch-all route.
+ */
+app.get("/{*splat}", (req, res, next) => {
   if (req.path.startsWith("/api/")) {
     return next();
   }
@@ -1045,3 +1051,4 @@ process.on("SIGTERM", async () => {
   await pool.end();
   process.exit(0);
 });
+```
