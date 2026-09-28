@@ -46,4 +46,3 @@ pnpm run typecheck
 pnpm --dir artifacts/traceback run build
 ```
 
-Do not commit `.env` files, credentials, `node_modules`, or build output.
