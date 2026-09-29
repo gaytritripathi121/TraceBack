@@ -1,3 +1,4 @@
+```js
 import { createRequire } from "node:module";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -21,7 +22,6 @@ async function buildAll() {
     outdir: distDir,
     outExtension: { ".js": ".mjs" },
     logLevel: "info",
-    )
     external: [
       "*.node",
       "sharp",
@@ -117,3 +117,4 @@ buildAll().catch((err) => {
   console.error(err);
   process.exit(1);
 });
+```
